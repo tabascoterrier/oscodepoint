@@ -115,7 +115,7 @@ class BaseCodePoint(object):
     nhs_codelist_name = 'Doc/NHS_Codelist.xls'
     data_name_format = 'Data/CSV/%s.csv'
 
-    def entries(self, areas=None, to_proj=pyproj.Proj(init='epsg:4326')):
+    def entries(self, areas=None, to_proj='epsg:4326'):
         """
         Iterate over postcode entries.
 
@@ -123,12 +123,13 @@ class BaseCodePoint(object):
         (the default) to iterate over everything.
 
         Grid references are converted to latitude and longitude - the target
-        coordinate system is defined by the `to_proj` parameter. Set it to a
-        `pyproj.Proj` instance to change from the default of WGS84, or use
-        `None` if you don't want coordinate conversion.
+        coordinate system is defined by the `to_proj` parameter. Set it to an
+        authority string [i.e. ‘epsg:4326’] or an EPSG integer code [i.e. 4326]
+        to change from the default of WGS84, or use `None` if you don't want 
+        coordinate conversion.
         """
 
-        from_proj = pyproj.Proj(init='epsg:27700')  # British National grid
+        transformer = pyproj.Transformer.from_crs('epsg:27700', to_proj)
 
         if areas is None:
             areas = self.areas
@@ -144,7 +145,7 @@ class BaseCodePoint(object):
 
                 if to_proj is not None:
                     eastings, northings = float(entry['Eastings']), float(entry['Northings'])
-                    lng, lat = pyproj.transform(from_proj, to_proj, eastings, northings)
+                    lat, lng = transformer.transform(eastings, northings)
                     entry['Longitude'], entry['Latitude'] = lng, lat
 
                 yield entry
